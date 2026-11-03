@@ -31,13 +31,16 @@ node --env-file=.env scripts/probe.mjs  # read-only API inspection; prints no cr
 
 ## Features
 
-- On-demand API pagination: fetch just the selected 50-request page, using the API's page count. No background draining or prefetching of other pages.
+- On-demand API pagination: the table loads the selected 50-request page using the API's page count. A bounded notification check also reads page one while viewing later pages; the complete request list is never drained.
 - Date and status filters are sent to the API. Site filtering, due/created sorting and debounced search apply to the current page, as labelled in the interface; the API does not support those operations across the complete dataset.
 - Search the current page by reference, title, location, current assignee name and site; updates after 300 ms.
 - Absolute dates and filters in the URL. `/requests/:id` opens a request directly; browser Back closes a drawer opened from the board.
 - Site-local timestamps with named timezones, overdue indicators and current staff names from the directory.
 - All history pages on first open, first response, hidden undone events and a show-undone switch.
-- Automatic polling of only the active request page and open detail, scheduled 10 seconds after the previous load completes. Background updates keep the current content and scroll position visible.
+- Automatic polling of the active request page, newest request head and open detail, scheduled 10 seconds after the previous load completes. Background updates keep the current content and scroll position visible.
+- Requests created after the initial notification baseline get a persistent “New” badge. Opening readable request details marks them seen; polling, navigation and reloads do not dismiss unread badges. An unread notice opens the latest new request, including one outside the visible page.
+- New-request batches play `public/sounds/sound-msg.mp3` once. The speaker button enables/previews or mutes sound and remembers the preference. [Browser autoplay policies](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Autoplay) can require a user click; rejected playback never interrupts polling or badges.
+- Audio uses one lazy, reusable media element, skips overlapping playback, and pauses/unloads its source on unmount. No audio objects are created per poll, no playback queue or retry timer accumulates, and pending play promises are handled during cleanup.
 - Timeouts, bounded concurrency, retry/backoff, `Retry-After`, cancellation, offline/retry notices and empty/loading/error states.
 - The same request table on desktop and mobile, with horizontal scrolling inside the table on narrow screens. Mobile filters use a sheet and request details use a full-screen view.
 - A compact “Back to top” button appears after scrolling down. It returns the page/table to the top, respects reduced motion and moves keyboard focus back to the heading.

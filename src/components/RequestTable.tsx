@@ -9,6 +9,7 @@ import {
   ChevronRight,
 } from "./icons";
 import { useBoardStore } from "../data/store";
+import { useNotificationStore } from "../data/notifications";
 import { formatInstant, formatSiteDate, todayIn } from "../lib/dates";
 import { isDueTomorrow } from "../lib/rules";
 import type { BoardRow } from "../lib/rows";
@@ -59,6 +60,7 @@ export function RequestTable({
 }: Props) {
   const navigate = useNavigate();
   const changed = useBoardStore((state) => state.recentlyChanged);
+  const unread = useNotificationStore((state) => state.unread);
   const search = toSearchParams(filters).toString();
   function openRow(event: MouseEvent, id: number) {
     if (
@@ -180,7 +182,12 @@ export function RequestTable({
                   </Link>
                 </td>
                 <td className="title-cell">
-                  <span className="request-title">{row.request.title}</span>
+                  <span className="request-title-line">
+                    <span className="request-title">{row.request.title}</span>
+                    {unread[row.request.id] && (
+                      <span className="new-request-badge">New</span>
+                    )}
+                  </span>
                   {row.request.location && (
                     <span className="request-location">
                       {row.request.location.replace(/\s*\/\s*/g, " · ")}

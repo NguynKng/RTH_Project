@@ -1,10 +1,12 @@
 import { ApiError } from "../api/client";
-import { listStaff } from "../api/endpoints";
+import { listRequests, listStaff } from "../api/endpoints";
 import { POLL_MS } from "../config";
 import { loadRequestPage } from "./snapshot";
-import type { PageQuery } from "../lib/pageQuery";
+import { requestPageParams, type PageQuery } from "../lib/pageQuery";
 import { useBoardStore } from "./store";
-// Refresh only the active page, scheduling the next poll after this one finishes.
+import { useNotificationStore } from "./notifications";
+// Load only the selected page, plus the first page when needed to detect new arrivals.
+// Never drain the full list; schedule the next poll after this one finishes.
 export function startPageSync(query: PageQuery) {
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -26,7 +28,34 @@ export function startPageSync(query: PageQuery) {
     useBoardStore.getState().setSync({ polling: true });
     let delay = POLL_MS;
     try {
-      await loadRequestPage(query, controller.signal);
+      const [page, head] = await Promise.allSettled([
+        loadRequestPage(query, controller.signal),
+        query.page === 1
+          ? Promise.resolve(null)
+          : listRequests(
+              requestPageParams(
+                { ...query, page: 1 },
+                useBoardStore.getState().statusLabels,
+              ),
+              controller.signal,
+            ),
+      ]);
+      if (controller.signal.aborted) return;
+      if (page.status === "rejected") throw page.reason;
+      // A failed notification-head check must not discard a successful visible page.
+      if (head.status === "fulfilled") {
+        const newCount = useNotificationStore
+          .getState()
+          .observeHead(
+            query,
+            head.value?.data ?? page.value ?? [],
+            useBoardStore.getState().sites,
+          );
+        if (newCount)
+          useBoardStore.setState({
+            announcement: `${newCount} new requests available`,
+          });
+      }
       const staff = await listStaff(controller.signal);
       if (controller.signal.aborted) return;
       useBoardStore.setState({

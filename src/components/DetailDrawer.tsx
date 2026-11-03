@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 import {
   ArrowRight,
@@ -14,6 +14,7 @@ import {
   X,
 } from "./icons";
 import { useBoardStore } from "../data/store";
+import { useNotificationStore } from "../data/notifications";
 import { useDialog } from "../hooks/useDialog";
 import { useNow } from "../hooks/useNow";
 import { useRequestDetail } from "../hooks/useRequestDetail";
@@ -254,6 +255,16 @@ export function DetailDrawer() {
     : null;
   const dueTomorrow =
     !!request && !!site && isDueTomorrow(request, site.timezone, now);
+  const readable = !!request && !detail.missing;
+  useEffect(() => {
+    if (id === null || !readable) return;
+    useNotificationStore.getState().setActiveRequest(id);
+    return () => {
+      if (useNotificationStore.getState().activeRequestId === id) {
+        useNotificationStore.getState().setActiveRequest(null);
+      }
+    };
+  }, [id, readable]);
   return (
     <div
       className="drawer-overlay"

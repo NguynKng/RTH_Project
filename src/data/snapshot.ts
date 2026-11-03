@@ -1,7 +1,9 @@
 import { listRequests } from "../api/endpoints";
-import { BOARD_PAGE_SIZE } from "../config";
-import { addDays, toApiDate } from "../lib/dates";
-import { pageQueryKey, type PageQuery } from "../lib/pageQuery";
+import {
+  pageQueryKey,
+  requestPageParams,
+  type PageQuery,
+} from "../lib/pageQuery";
 import { mergeRequests, useBoardStore } from "./store";
 
 /** Fetch exactly the requested API page; never drain or prefetch other pages. */
@@ -17,17 +19,8 @@ export async function loadRequestPage(query: PageQuery, signal: AbortSignal) {
     useBoardStore.setState({ snapshot: "loading", snapshotError: undefined });
   }
 
-  const statuses = query.statuses.length
-    ? query.statuses
-    : Object.keys(initial.statusLabels).filter((value) => value !== "canceled");
   const response = await listRequests(
-    {
-      page: query.page,
-      per_page: BOARD_PAGE_SIZE,
-      created_from: toApiDate(addDays(query.from, -1)),
-      created_to: toApiDate(addDays(query.to, 1)),
-      status: statuses.length ? JSON.stringify(statuses) : undefined,
-    },
+    requestPageParams(query, initial.statusLabels),
     signal,
   );
   if (signal.aborted) return;
@@ -65,4 +58,5 @@ export async function loadRequestPage(query: PageQuery, signal: AbortSignal) {
         ? `${changes.length + removed} requests updated on this page`
         : previous.announcement,
   });
+  return response.data;
 }

@@ -14,6 +14,7 @@ import { BackToTop } from "../components/BackToTop";
 import { Pagination, RequestTable } from "../components/RequestTable";
 import { SkeletonRows } from "../components/Skeleton";
 import { SyncBanner } from "../components/SyncBanner";
+import { NewRequestsNotice } from "../components/NewRequestsNotice";
 import { TopBar } from "../components/TopBar";
 import { Icon, StatePanel } from "../components/ui";
 
@@ -130,6 +131,7 @@ export function BoardPage() {
             resultCount={rows.length}
           />
           <SyncBanner />
+          <NewRequestsNotice />
           <section
             className={`results-shell ${reloading ? "results-reloading" : ""}`}
             id="requests-results"

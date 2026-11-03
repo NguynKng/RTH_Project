@@ -1,7 +1,33 @@
-import { RefreshCw } from "./icons";
+import { RefreshCw, Volume2, VolumeX } from "./icons";
 import { useBoardStore } from "../data/store";
 import { useNow } from "../hooks/useNow";
 import { CopyLinkButton, Icon } from "./ui";
+import { useNotificationSound } from "../hooks/useNotificationSound";
+
+function NotificationSoundButton() {
+  const { enabled, status, toggle } = useNotificationSound();
+  const ready = enabled && status === "ready";
+  const label = ready
+    ? "Mute notification sounds"
+    : status === "error"
+      ? "Retry notification sound"
+      : "Enable notification sounds";
+  return (
+    <button
+      type="button"
+      className="icon-button sound-toggle"
+      aria-label={label}
+      title={label}
+      aria-pressed={ready}
+      onClick={toggle}
+    >
+      <Icon as={ready ? Volume2 : VolumeX} size={19} />
+      {enabled && !ready && (
+        <span className="sound-activation-dot" aria-hidden="true" />
+      )}
+    </button>
+  );
+}
 export function LiveIndicator() {
   const sync = useBoardStore((state) => state.sync);
   const now = useNow(1000).getTime();
@@ -59,6 +85,7 @@ export function TopBar() {
       </div>
       <div className="topbar-actions">
         <LiveIndicator />
+        <NotificationSoundButton />
         <button
           className="icon-button refresh-button"
           aria-label="Refresh requests"

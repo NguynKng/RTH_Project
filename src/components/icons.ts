@@ -5,6 +5,7 @@ export { default as ArrowRight } from "lucide-react/icons/arrow-right";
 export { default as ArrowUp } from "lucide-react/icons/arrow-up";
 export { default as ArrowUpDown } from "lucide-react/icons/arrow-up-down";
 export { default as Bot } from "lucide-react/icons/bot";
+export { default as Bell } from "lucide-react/icons/bell";
 export { default as Calendar } from "lucide-react/icons/calendar";
 export { default as CalendarClock } from "lucide-react/icons/calendar-clock";
 export { default as Check } from "lucide-react/icons/check";
@@ -31,6 +32,8 @@ export { default as SlidersHorizontal } from "lucide-react/icons/sliders-horizon
 export { default as StickyNote } from "lucide-react/icons/sticky-note";
 export { default as Undo2 } from "lucide-react/icons/undo-2";
 export { default as UserRound } from "lucide-react/icons/user-round";
+export { default as Volume2 } from "lucide-react/icons/volume-2";
+export { default as VolumeX } from "lucide-react/icons/volume-x";
 export { default as WifiOff } from "lucide-react/icons/wifi-off";
 export { default as X } from "lucide-react/icons/x";
 export type { LucideIcon } from "lucide-react/types";
