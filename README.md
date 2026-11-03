@@ -1,55 +1,63 @@
-# Requests board: starter kit
+# Bluebay requests board
 
-The rules are in the brief on your invitation page. Everything else is here.
+A read-only maintenance requests dashboard built with React 18, TypeScript and Vite. The interface follows the supplied Bluebay reference: a white canvas, emerald accents, a desktop table, mobile cards and a request history drawer.
 
-```
-docs/rules.md       the brief's rules with the exact field names
-docs/api.md         the helpdesk API your app reads (from the browser)
-starters/           a runnable starter in React and in Vue, both TypeScript + Vite + Vitest: pick one
-DECISIONS.md        fill this in; it is part of your submission
-.env.example        copy to .env and paste in your practice API details
-```
+## Run locally
 
-## Setup
+Requires Node 20+.
 
-You need Node 20+ and Git.
-
-```bash
-git init && git add -A && git commit -m "chore: start from the kit"
-cp -r starters/react-vite/. . && rm -r starters   # or starters/vue-vite
-cp .env.example .env                              # paste in HELPDESK_URL and HELPDESK_TOKEN
-npm install
-npm run dev                                       # http://localhost:5173
-npm test                                          # exit 0 = pass
+```sh
+npm ci
 ```
 
-Check the API works:
+Copy `.env.example` to `.env` and set `HELPDESK_URL` and `HELPDESK_TOKEN` to your practice API credentials. The local `.env` is ignored by Git.
 
-```bash
-curl -H "Authorization: Bearer $HELPDESK_TOKEN" "$HELPDESK_URL/v1/statuses"
+```sh
+npm run dev
 ```
 
-You may change anything in the starter, add libraries, or start from your own Vite project. Keep
-these working at the repo root, because a script checks them before anyone reads your code:
+Open the URL printed by Vite, normally `http://localhost:5173`. Run commands from this repository's root; the React starter has been moved out of `react-vite/`.
 
-| Check | Command |
-| --- | --- |
-| Builds | `npm ci && npm run build` |
-| Tests pass | `npm test` |
-| Type-checks | `npx tsc --noEmit` |
-| Complete | `DECISIONS.md` with its four headings, at least 5 commits, a video link, no secrets in the code |
+## Available commands
 
-`.env` is ignored by git; keep it that way. The app reads `HELPDESK_URL` and `HELPDESK_TOKEN` from
-`import.meta.env` (see `vite.config.ts`).
+```sh
+npm run build       # production bundle in dist/
+npm run preview     # serve the production bundle
+npm run typecheck   # strict TypeScript checks
+npm test            # business rules, API retry, date, search, URL and store tests
+npm run test:watch
+node --env-file=.env scripts/probe.mjs  # read-only API inspection; prints no credentials
+```
 
-## Submitting
+## Features
 
-1. Commit as you go (at least 5 commits); we read the history.
-2. Fill in `DECISIONS.md`.
-3. Record a short screen recording (about 3 minutes) of the app, narrated in English.
-4. Push to a **public** repo (e.g. GitHub) and paste the link on your invitation page, or zip the
-   folder **including `.git`** (leave out `node_modules` and `.env`) and upload it there.
+- On-demand API pagination: fetch just the selected 50-request page, using the API's page count. No background draining or prefetching of other pages.
+- Date and status filters are sent to the API. Site filtering, due/created sorting and debounced search apply to the current page, as labelled in the interface; the API does not support those operations across the complete dataset.
+- Search the current page by reference, title, location, current assignee name and site; updates after 300 ms.
+- Absolute dates and filters in the URL. `/requests/:id` opens a request directly; browser Back closes a drawer opened from the board.
+- Site-local timestamps with named timezones, overdue indicators and current staff names from the directory.
+- All history pages on first open, first response, hidden undone events and a show-undone switch.
+- Automatic polling of only the active request page and open detail, scheduled 10 seconds after the previous load completes. Background updates keep the current content and scroll position visible.
+- Timeouts, bounded concurrency, retry/backoff, `Retry-After`, cancellation, offline/retry notices and empty/loading/error states.
+- The same request table on desktop and mobile, with horizontal scrolling inside the table on narrow screens. Mobile filters use a sheet and request details use a full-screen view.
+- A compact “Back to top” button appears after scrolling down. It returns the page/table to the top, respects reduced motion and moves keyboard focus back to the heading.
+- Priority badges use red for High, amber for Medium and blue for Low, alongside text and signal icons.
+- Open requests due tomorrow show a yellow “Due tomorrow” badge and highlighted date in the table and detail drawer, based on each site's local calendar date.
+- Desktop results fit the available viewport through flex layout, with the footer outside the scroll region. Short windows and mobile use normal vertical document flow; horizontal overflow stays inside the table.
 
-Cap it at 3 hours. Go through the levels in order and say in `DECISIONS.md` what you'd do next.
-**Submit even if it's unfinished:** we review everything you did, not only the final result.
-A plain table is enough; polish isn't scored. We never reuse submissions as company work.
+## Code map
+
+```text
+src/api/          API client, limiter and typed endpoints
+src/data/         Zustand server-data store, bootstrap, active-page loading and polling
+src/lib/          Pure date, rule, search, URL and row derivation functions
+src/hooks/        URL filters, debounce, clock, detail loading and modal focus
+src/components/   Table, filters, detail timeline, back-to-top control and shared UI
+src/routes/       React Router board layout and nested detail route
+```
+
+Read [DECISIONS.md](DECISIONS.md) for API findings and trade-offs, [docs/rules.md](docs/rules.md) for the six business rules, and [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) for the implementation brief.
+
+Production hosting needs an SPA fallback to `index.html` for `/requests/*`. `HELPDESK_*` values are exposed to the browser for this practice API; a production integration should use a server-side proxy.
+
+Browser and visual acceptance testing is left to the project owner as requested. No deployment, submission or narrated video has been produced.

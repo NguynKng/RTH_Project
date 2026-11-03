@@ -1,19 +1,48 @@
 # DECISIONS
 
-Write in English. Short bullet points are fine. Reviewers read this file alongside your code.
-
 ## What I assumed
 
-<!-- Anything the brief did not say that you had to decide. -->
+- The default range contains 30 calendar days inclusive, ending on today's date in the configured site furthest ahead. On 03 November 2026 that is 05 October–03 November, rather than the 31-day span in the illustrative screenshot.
+- Shared URLs contain absolute dates. Filters, search, sort and page live in the URL; the open request is the nested `/requests/:id` route. Zustand contains server data and loading/sync state.
+- Clearing filters selects all sites and all non-excluded statuses and restores the default range/sort. Selecting no checkboxes means all values.
+- Due-date sorting compares site-local calendar dates, with nulls last in both directions and request ID breaking ties. Creation sorting compares actual instants, including UTC offsets.
+- Following the owner's pagination revision, the board fetches one API page of 50 records at a time. The API's `total_pages` drives navigation even when local rules/search hide every row on the current page. Request counts and overdue counts are labelled as current-page values.
+- The API supports date/status filters, but a probe with a deliberately unmatched `q` and `site_id` still returned requests from all three sites. Site/search/sort therefore apply to the current page and are labelled accordingly; global versions need backend support. Local filter/sort changes preserve the page, while date/status changes reset to page one.
+- Priority now uses red/amber/blue badges for High/Medium/Low, with the existing text and icons preserved. This follows the owner's requested update to the original monochrome priorities.
+- A pending/processing request due on the next site-local calendar date gets a yellow “Due tomorrow” warning. Completed, canceled, deleted, merged or undated requests do not. This is one calendar day remaining rather than a rolling 24-hour deadline, because the API exposes `due_on` as a date.
+- Following the owner's mobile revision, all screen sizes use the same semantic request table. Narrow screens scroll horizontally inside the table and vertically through the page; the old mobile card rendering and card skeletons were removed.
+- A 44px back-to-top control appears after 320px of vertical page/table scrolling, respects reduced motion and restores focus to the page heading. It listens for a visibility threshold without re-rendering React for every scroll pixel. Changing pages resets vertical scrolling; background polls preserve the scroll position.
+- Undo chains are resolved newest first, breaking ties by event ID. Undoing an undo restores the original. First response excludes undone processing events; `IGNORE_UNDONE_RESPONSES` is the single switch for changing that interpretation.
+- Deadline events contain wall-clock text, so their dates/times are never parsed as UTC instants. The IANA zone is named directly, avoiding an invented offset for an ambiguous daylight-saving wall-clock time.
+- An event assignment has a name but no staff ID. An exact unique directory-name match is shown; otherwise the supplied assignment name is explicitly labelled “name at the time.” Actors and request assignees are always looked up by ID.
+- Business hours and holidays are outside the six requested rules.
 
 ## What I found in the API or data
 
-<!-- Anything that did not match the docs, or surprised you, and how you handled it. -->
+- The existing `.env` was inside `react-vite/`; it was moved with the starter and remains ignored. No credentials are included in source or these notes.
+- The API returned three sites: IDs 11 (Asia/Singapore), 12 (Australia/Sydney), and 13 (Asia/Jakarta), 15 staff members, and four status labels. The canceled status label is “Cancelled.”
+- An initial unfiltered probe returned 11,986 unique requests across 122 pages, with 121 duplicate IDs across page boundaries. Requested pages deduplicate by ID and retain the most recent `updated_at` instant. The standalone probe defaults to the padded last-30-day range.
+- The initial sample had no unknown site/staff IDs, and priorities were High, Medium, Low or null. UI fallbacks still handle unknown IDs, missing assignments and unfamiliar status labels.
+- Sample events used Unix seconds and `DD/MM/YYYY HH:MM` deadlines. The real request data differs from the illustrative screenshot, so the application displays live API records and computes its own counts.
+- The change feed was still not drained after 21 pages of 500 items (10,500 changes), and returned HTTP 429 with `Retry-After: 1` during the probe.
+- The board now polls only the selected API page instead of replaying the change feed or fetching a complete range snapshot. Every next poll starts 10 seconds after the previous load/retries complete. Staff are refreshed too, so current names remain current. Detail events are polled independently while open.
+- Date-filter semantics were not conclusively established. The API query pads the range by one day on either side, then applies the exact inclusive range in each site's timezone in the client.
 
 ## How I used AI
 
-<!-- Which tools, what you asked, what came back wrong, what you changed. "I didn't use AI" is fine too. -->
+- Codex read the implementation plan, business rules, API contract, UI spec, design notes and reference image, then implemented the React application and pure-function tests.
+- The library selection was updated to the owner's revised plan: Zustand, React Router v7 and Lucide React. No router, debounce or date libraries beyond that selection were added.
+- The API probe informed the pagination deduplication and snapshot-polling fallback. Synthetic unit fixtures exercise timezone boundaries, undo chains, unknown staff, current-name search, null sorting, URL validation, retry timing and stale updates.
+- During review, Codex corrected focus restoration after removing `inert`, kept a fetched detail available outside the board's range, retained old rows during a range reload, and handled bursts spanning multiple event pages.
+- In the requested follow-up, Codex replaced fixed viewport subtraction with flex-based desktop scrolling, added priority colors, and changed client-side slicing to on-demand API pagination. Regression tests cover single-page fetching, page replacement, polling, aborts and filter/page scope.
+- Browser/visual acceptance testing is intentionally left to the owner following their request. There is no claim of screen-reader or browser QA.
 
 ## Trade-offs and what I would do next
 
-<!-- What you left out to stay within 3 hours, and what you would do with more time. -->
+- Polling fetches one request page per cycle plus the staff directory. Failed page loads preserve the last successful page and offer retry. Other pages are fetched only when selected.
+- API pages can overlap while data changes. Each active page is deduplicated and refreshed independently; global ordering/search/filtering requires additional server-side API parameters rather than downloading every page in the browser.
+- The practice token is exposed through Vite's `HELPDESK_` env prefix and therefore appears in a production browser bundle. Use a small server-side proxy for production credentials.
+- Browser Back closes a pushed detail route; the close button explicitly navigates to the board with the same filters. Production hosting needs an SPA rewrite to `index.html`.
+- The Inter font is self-hosted. There are no generated images or third-party runtime UI/date/search libraries.
+- Next steps: owner-run browser/mobile and screen-reader checks, E2E coverage, virtualized rows for larger page sizes, persistent incremental cursors, and an SLA view based on business hours/holidays.
+- Submission items are not fabricated: no narrated video link, public push or deployment was produced. Existing Git changes were preserved for owner review.
