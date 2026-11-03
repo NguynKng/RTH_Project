@@ -42,6 +42,7 @@ export function startPageSync(query: PageQuery) {
       ]);
       if (controller.signal.aborted) return;
       if (page.status === "rejected") throw page.reason;
+      useNotificationStore.getState().cacheUnreadRequests(page.value ?? []);
       // A failed notification-head check must not discard a successful visible page.
       if (head.status === "fulfilled") {
         const newCount = useNotificationStore

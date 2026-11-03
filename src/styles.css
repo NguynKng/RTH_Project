@@ -735,25 +735,60 @@ h1 {
   font-weight: 550;
   line-height: 1.5;
 }
-.new-requests-notice {
+.new-requests-panel {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 20px;
+  border: 1px solid #b9ebd0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.new-requests-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #b9ebd0;
+  background: var(--green-soft);
+}
+.new-requests-title {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 16px;
-  padding: 10px 14px;
-  border: 1px solid #b9ebd0;
-  border-radius: var(--radius);
-  background: var(--green-soft);
   color: var(--green-ink);
-  font-size: 12px;
 }
-.new-requests-notice > span {
-  flex: 1;
+.new-requests-title h2 {
+  font-size: 15px;
+  font-weight: 550;
 }
-.new-requests-notice .text-button {
-  padding: 4px 0;
+.new-requests-title .count-badge {
+  background: var(--canvas);
+}
+.new-requests-header > p {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.new-requests-content {
+  min-width: 0;
+}
+.new-requests-panel .table-scroll {
+  max-height: 260px;
+}
+.new-requests-panel .table-footer {
+  padding: 8px 12px;
+}
+.new-requests-loading,
+.new-requests-errors {
+  padding: 12px 16px;
   font-size: 12px;
+  color: var(--muted);
+}
+.new-requests-errors {
+  background: var(--warning);
+}
+.new-requests-errors > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
 }
 .request-location {
   display: block;
@@ -1555,7 +1590,6 @@ h1 {
   .board-main > .page-heading,
   .board-main > .filters,
   .board-main > .notice,
-  .board-main > .new-requests-notice,
   .board-footnote {
     flex-shrink: 0;
   }
@@ -1586,6 +1620,25 @@ h1 {
   }
   .table-footer {
     flex-shrink: 0;
+  }
+  /* Two complete tables need normal page flow, with bounded result viewports. */
+  .board-layout.has-new-requests {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+    overflow-x: clip;
+  }
+  .has-new-requests .board-main {
+    display: block;
+    flex: initial;
+  }
+  .has-new-requests .results-shell,
+  .has-new-requests .results-content {
+    display: block;
+    flex: initial;
+  }
+  .has-new-requests #requests-results .table-scroll {
+    max-height: 55dvh;
   }
 }
 @media (max-width: 767px) {

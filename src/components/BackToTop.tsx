@@ -19,9 +19,12 @@ export function BackToTop({
   const [visible, setVisible] = useState(false);
   const visibility = useRef(false);
   const update = useCallback(() => {
-    const table =
-      containerRef.current?.querySelector<HTMLElement>(".table-scroll");
-    const next = window.scrollY > 320 || (table?.scrollTop ?? 0) > 320;
+    const tables =
+      containerRef.current?.querySelectorAll<HTMLElement>(".table-scroll") ??
+      [];
+    const next =
+      window.scrollY > 320 ||
+      Array.from(tables).some((table) => table.scrollTop > 320);
     // Only update React when crossing the threshold, not for every scroll pixel.
     if (next !== visibility.current) {
       visibility.current = next;
@@ -63,8 +66,8 @@ export function BackToTop({
           : "smooth";
         window.scrollTo({ top: 0, behavior });
         containerRef.current
-          ?.querySelector(".table-scroll")
-          ?.scrollTo({ top: 0, behavior });
+          ?.querySelectorAll(".table-scroll")
+          .forEach((table) => table.scrollTo({ top: 0, behavior }));
         document
           .getElementById("requests-title")
           ?.focus({ preventScroll: true });

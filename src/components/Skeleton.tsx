@@ -1,5 +1,5 @@
 const widths = ["60%", "88%", "65%", "56%", "75%", "85%", "70%", "90%"];
-export function SkeletonRows() {
+export function SkeletonRows({ count = 8 }: { count?: number } = {}) {
   return (
     <>
       <div className="table-scroll" aria-hidden="true">
@@ -18,7 +18,7 @@ export function SkeletonRows() {
               <span key={label}>{label}</span>
             ))}
           </div>
-          {Array.from({ length: 8 }, (_, row) => (
+          {Array.from({ length: count }, (_, row) => (
             <div className="skeleton-table-row" key={row}>
               {widths.map((width, col) => (
                 <span key={col} className="skeleton" style={{ width }}>

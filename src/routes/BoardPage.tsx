@@ -3,6 +3,7 @@ import { Outlet, useLocation } from "react-router";
 import { LoaderCircle, SearchX } from "../components/icons";
 import { subscribeApi } from "../api/client";
 import { useBoardStore } from "../data/store";
+import { useNotificationStore } from "../data/notifications";
 import { startPageSync } from "../data/sync";
 import { useBoardRows } from "../hooks/useBoardRows";
 import { useFilters } from "../hooks/useFilters";
@@ -14,7 +15,7 @@ import { BackToTop } from "../components/BackToTop";
 import { Pagination, RequestTable } from "../components/RequestTable";
 import { SkeletonRows } from "../components/Skeleton";
 import { SyncBanner } from "../components/SyncBanner";
-import { NewRequestsNotice } from "../components/NewRequestsNotice";
+import { NewRequestsTable } from "../components/NewRequestsTable";
 import { TopBar } from "../components/TopBar";
 import { Icon, StatePanel } from "../components/ui";
 
@@ -27,6 +28,9 @@ export function BoardPage() {
   const refreshVersion = useBoardStore((state) => state.refreshVersion);
   const refresh = useBoardStore((state) => state.refresh);
   const announcement = useBoardStore((state) => state.announcement);
+  const hasNewRequests = useNotificationStore(
+    (state) => Object.keys(state.unread).length > 0,
+  );
   const statusKey = filters.statuses.join(",");
   const query: PageQuery = useMemo(
     () => ({
@@ -78,7 +82,7 @@ export function BoardPage() {
   }, [loadedPage, queryKey, filters.page, setFilters]);
   useEffect(() => {
     if (loadedPage?.key === queryKey) {
-      document.querySelector(".table-scroll")?.scrollTo({ top: 0 });
+      document.getElementById("requests-table-scroll")?.scrollTo({ top: 0 });
       window.scrollTo({ top: 0 });
     }
   }, [queryKey, loadedPage?.key]);
@@ -87,7 +91,10 @@ export function BoardPage() {
     !loadedPage && (snapshot === "idle" || snapshot === "loading");
   return (
     <>
-      <div ref={background} className="board-layout">
+      <div
+        ref={background}
+        className={`board-layout ${hasNewRequests ? "has-new-requests" : ""}`}
+      >
         <a href="#requests-results" className="skip-link">
           Skip to requests
         </a>
@@ -131,7 +138,11 @@ export function BoardPage() {
             resultCount={rows.length}
           />
           <SyncBanner />
-          <NewRequestsNotice />
+          <NewRequestsTable
+            filters={filters}
+            now={now}
+            selectedId={selectedId ? Number(selectedId) : undefined}
+          />
           <section
             className={`results-shell ${reloading ? "results-reloading" : ""}`}
             id="requests-results"

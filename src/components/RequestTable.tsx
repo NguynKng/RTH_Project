@@ -26,9 +26,12 @@ import {
 interface Props {
   rows: BoardRow[];
   filters: Filters;
-  setFilters: (patch: Partial<Filters>) => void;
+  setFilters?: (patch: Partial<Filters>) => void;
   now: Date;
   selectedId?: number;
+  tableId?: string;
+  label?: string;
+  sortable?: boolean;
 }
 function Due({ row, now }: { row: BoardRow; now: Date }) {
   const dueTomorrow = isDueTomorrow(row.request, row.site.timezone, now);
@@ -57,6 +60,9 @@ export function RequestTable({
   setFilters,
   now,
   selectedId,
+  tableId = "requests",
+  label = "Requests table",
+  sortable = true,
 }: Props) {
   const navigate = useNavigate();
   const changed = useBoardStore((state) => state.recentlyChanged);
@@ -94,7 +100,7 @@ export function RequestTable({
         <button
           className={`table-sort ${active ? "sort-active" : ""}`}
           onClick={() =>
-            setFilters({
+            setFilters?.({
               sort: field,
               dir: active
                 ? filters.dir === "asc"
@@ -123,21 +129,22 @@ export function RequestTable({
   }
   return (
     <>
-      <p className="table-scroll-hint" id="table-scroll-hint">
+      <p className="table-scroll-hint" id={`${tableId}-scroll-hint`}>
         <Icon as={ArrowRight} size={14} /> Scroll horizontally to see all
         columns
       </p>
       <div
         className="table-scroll"
+        id={`${tableId}-table-scroll`}
         role="region"
-        aria-label="Requests table"
-        aria-describedby="table-scroll-hint"
+        aria-label={label}
+        aria-describedby={`${tableId}-scroll-hint`}
         tabIndex={0}
       >
         <table className="request-table">
           <caption className="sr-only">
-            Maintenance requests. Open a request reference to view its details
-            and history. All dates and times use the request site's timezone.
+            {label}. Open a request reference to view its details and history.
+            All dates and times use the request site's timezone.
           </caption>
           <colgroup>
             {[
@@ -161,8 +168,16 @@ export function RequestTable({
               <th scope="col">Priority</th>
               <th scope="col">Status</th>
               <th scope="col">Assignee</th>
-              <SortHeader label="Due" field="due" />
-              <SortHeader label="Created" field="created" />
+              {sortable && setFilters ? (
+                <SortHeader label="Due" field="due" />
+              ) : (
+                <th scope="col">Due</th>
+              )}
+              {sortable && setFilters ? (
+                <SortHeader label="Created" field="created" />
+              ) : (
+                <th scope="col">Created</th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -226,6 +241,7 @@ export function Pagination({
   perPage,
   shown,
   disabled = false,
+  label = "Results pages",
   onPage,
 }: {
   totalPages: number;
@@ -233,6 +249,7 @@ export function Pagination({
   perPage: number;
   shown: number;
   disabled?: boolean;
+  label?: string;
   onPage: (page: number) => void;
 }) {
   const pages = Math.max(1, totalPages);
@@ -247,7 +264,7 @@ export function Pagination({
           {perPage} requests per page
         </span>
       </span>
-      <nav aria-label="Results pages" className="pagination">
+      <nav aria-label={label} className="pagination">
         <button
           className="page-button"
           aria-label="Previous page"

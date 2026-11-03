@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { HelpdeskRequest, Site } from "../types";
 import { defaultFilters } from "../lib/urlState";
 import { parseUnread, useNotificationStore } from "./notifications";
+import { UNREAD_REQUEST_CACHE_LIMIT } from "../config";
 
 const query = defaultFilters(new Date("2026-11-03T05:00:00Z"));
 const sites: Record<number, Site> = {
@@ -151,5 +152,56 @@ describe("unread new requests", () => {
         "4": { ref: 7, createdAt: 1 },
       }),
     ).toEqual({ 3: { ref: "WO-3", createdAt: 1 } });
+  });
+  it("keeps full unread records available across table pages and frees them when seen", () => {
+    const store = useNotificationStore.getState();
+    store.observeHead(query, [request(1)], sites);
+    store.observeHead(query, [request(2)], sites);
+    expect(useNotificationStore.getState().records[2].title).toBe("Lift");
+    store.observeHead({ ...query, page: 4 }, [], sites);
+    expect(useNotificationStore.getState().records[2]).toBeDefined();
+    store.setActiveRequest(2);
+    expect(useNotificationStore.getState().records[2]).toBeUndefined();
+    store.cacheUnreadRequests([request(2)]);
+    expect(useNotificationStore.getState().unread[2]).toBeUndefined();
+    expect(useNotificationStore.getState().records[2]).toBeUndefined();
+  });
+  it("bounds the payload cache without dropping unread badges and hydrates evicted records on demand", () => {
+    const store = useNotificationStore.getState();
+    store.observeHead(query, [request(1)], sites);
+    const arrivals = Array.from(
+      { length: UNREAD_REQUEST_CACHE_LIMIT + 20 },
+      (_, i) => request(i + 2),
+    );
+    store.observeHead(query, arrivals, sites);
+    expect(Object.keys(useNotificationStore.getState().unread)).toHaveLength(
+      arrivals.length,
+    );
+    expect(Object.keys(useNotificationStore.getState().records)).toHaveLength(
+      UNREAD_REQUEST_CACHE_LIMIT,
+    );
+    const evictedId = arrivals.at(-1)!.id;
+    expect(useNotificationStore.getState().records[evictedId]).toBeUndefined();
+    store.cacheUnreadRequests([request(evictedId)]);
+    expect(useNotificationStore.getState().records[evictedId]).toBeDefined();
+    expect(Object.keys(useNotificationStore.getState().records)).toHaveLength(
+      UNREAD_REQUEST_CACHE_LIMIT,
+    );
+    expect(useNotificationStore.getState().serial).toBe(1);
+  });
+  it("updates the unread table from fresh records without overwriting them with older snapshots or replaying sound", () => {
+    const store = useNotificationStore.getState();
+    store.observeHead(query, [request(1)], sites);
+    store.observeHead(query, [request(2)], sites);
+    store.cacheUnreadRequests([
+      request(2, { title: "Fresh title", updated_at: "2026-11-03T00:00:00Z" }),
+    ]);
+    store.observeHead(query, [request(2)], sites);
+    expect(useNotificationStore.getState().records[2].title).toBe(
+      "Fresh title",
+    );
+    expect(useNotificationStore.getState().serial).toBe(1);
+    store.cacheUnreadRequests([request(999)]);
+    expect(useNotificationStore.getState().records[999]).toBeUndefined();
   });
 });
