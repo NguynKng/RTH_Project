@@ -153,6 +153,26 @@ describe("unread new requests", () => {
       }),
     ).toEqual({ 3: { ref: "WO-3", createdAt: 1 } });
   });
+  it("exposes only real arrival batches for motion without replaying on cache updates or seen state", () => {
+    const store = useNotificationStore.getState();
+    store.observeHead(query, [request(1)], sites);
+    expect(useNotificationStore.getState().latestArrivalIds).toEqual([]);
+    store.observeHead(query, [request(2), request(3)], sites);
+    const arrivals = useNotificationStore.getState().latestArrivalIds;
+    expect(arrivals).toEqual([2, 3]);
+    store.cacheUnreadRequests([request(2)]);
+    store.markSeen(2);
+    store.observeHead(query, [request(2), request(3)], sites);
+    expect(useNotificationStore.getState().latestArrivalIds).toBe(arrivals);
+    expect(useNotificationStore.getState().serial).toBe(1);
+    store.observeHead(
+      query,
+      [request(4, { created_at: "2026-11-03T00:00:00Z" })],
+      sites,
+    );
+    expect(useNotificationStore.getState().latestArrivalIds).toEqual([4]);
+    expect(useNotificationStore.getState().serial).toBe(2);
+  });
   it("keeps full unread records available across table pages and frees them when seen", () => {
     const store = useNotificationStore.getState();
     store.observeHead(query, [request(1)], sites);

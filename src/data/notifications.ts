@@ -90,6 +90,7 @@ interface NotificationStore {
   context: string | null;
   cursor: CreationCursor | null;
   serial: number;
+  latestArrivalIds: number[];
   soundEnabled: boolean;
   observeHead(
     query: PageQuery,
@@ -109,6 +110,7 @@ export const useNotificationStore = create<NotificationStore>()((set, get) => ({
   context: null,
   cursor: null,
   serial: 0,
+  latestArrivalIds: [],
   soundEnabled: readStored(SOUND_KEY) !== false,
   observeHead: (query, requests, sites) => {
     const state = get();
@@ -142,6 +144,9 @@ export const useNotificationStore = create<NotificationStore>()((set, get) => ({
       unread,
       records: mergeUnreadRecords(state.records, eligible, unread),
       serial: state.serial + (added.length ? 1 : 0),
+      latestArrivalIds: added.length
+        ? added.map((request) => request.id)
+        : state.latestArrivalIds,
     });
     if (added.length) writeStored(UNREAD_KEY, unread);
     return added.length;

@@ -3,7 +3,6 @@ import { Outlet, useLocation } from "react-router";
 import { LoaderCircle, SearchX } from "../components/icons";
 import { subscribeApi } from "../api/client";
 import { useBoardStore } from "../data/store";
-import { useNotificationStore } from "../data/notifications";
 import { startPageSync } from "../data/sync";
 import { useBoardRows } from "../hooks/useBoardRows";
 import { useFilters } from "../hooks/useFilters";
@@ -28,9 +27,6 @@ export function BoardPage() {
   const refreshVersion = useBoardStore((state) => state.refreshVersion);
   const refresh = useBoardStore((state) => state.refresh);
   const announcement = useBoardStore((state) => state.announcement);
-  const hasNewRequests = useNotificationStore(
-    (state) => Object.keys(state.unread).length > 0,
-  );
   const statusKey = filters.statuses.join(",");
   const query: PageQuery = useMemo(
     () => ({
@@ -83,6 +79,7 @@ export function BoardPage() {
   useEffect(() => {
     if (loadedPage?.key === queryKey) {
       document.getElementById("requests-table-scroll")?.scrollTo({ top: 0 });
+      document.querySelector("[data-page-scroll]")?.scrollTo({ top: 0 });
       window.scrollTo({ top: 0 });
     }
   }, [queryKey, loadedPage?.key]);
@@ -91,15 +88,12 @@ export function BoardPage() {
     !loadedPage && (snapshot === "idle" || snapshot === "loading");
   return (
     <>
-      <div
-        ref={background}
-        className={`board-layout ${hasNewRequests ? "has-new-requests" : ""}`}
-      >
+      <div ref={background} className="board-layout">
         <a href="#requests-results" className="skip-link">
           Skip to requests
         </a>
         <TopBar />
-        <main className="board-main">
+        <main className="board-main" data-page-scroll>
           <div className="page-heading">
             <h1 id="requests-title" tabIndex={-1}>
               Requests

@@ -20,8 +20,9 @@ export function BackToTop({
   const visibility = useRef(false);
   const update = useCallback(() => {
     const tables =
-      containerRef.current?.querySelectorAll<HTMLElement>(".table-scroll") ??
-      [];
+      containerRef.current?.querySelectorAll<HTMLElement>(
+        "[data-page-scroll], .table-scroll",
+      ) ?? [];
     const next =
       window.scrollY > 320 ||
       Array.from(tables).some((table) => table.scrollTop > 320);
@@ -66,7 +67,7 @@ export function BackToTop({
           : "smooth";
         window.scrollTo({ top: 0, behavior });
         containerRef.current
-          ?.querySelectorAll(".table-scroll")
+          ?.querySelectorAll("[data-page-scroll], .table-scroll")
           .forEach((table) => table.scrollTo({ top: 0, behavior }));
         document
           .getElementById("requests-title")

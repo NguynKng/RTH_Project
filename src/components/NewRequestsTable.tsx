@@ -4,6 +4,7 @@ import { NEW_REQUESTS_PAGE_SIZE } from "../config";
 import { useNotificationStore } from "../data/notifications";
 import { useBoardStore } from "../data/store";
 import { useUnreadRequests } from "../hooks/useUnreadRequests";
+import { useArrivalMotion } from "../hooks/useArrivalMotion";
 import { buildUnreadRows, unreadPage } from "../lib/unreadRows";
 import type { Filters } from "../lib/urlState";
 import { Bell } from "./icons";
@@ -21,6 +22,8 @@ export function NewRequestsTable({
   selectedId?: number;
 }) {
   const unread = useNotificationStore((state) => state.unread);
+  const batch = useNotificationStore((state) => state.serial);
+  const arrivalIds = useNotificationStore((state) => state.latestArrivalIds);
   const sites = useBoardStore((state) => state.sites);
   const staff = useBoardStore((state) => state.staff);
   const { search } = useLocation();
@@ -30,6 +33,11 @@ export function NewRequestsTable({
   const { rows, unavailable } = useMemo(
     () => buildUnreadRows(view.ids, records, sites, staff, now),
     [view.ids, records, sites, staff, now],
+  );
+  const bodyRef = useArrivalMotion(
+    batch,
+    arrivalIds,
+    `new-requests:${view.page}`,
   );
   const problems = [
     ...new Set([
@@ -67,6 +75,7 @@ export function NewRequestsTable({
             tableId="new-requests"
             label="New unread requests"
             sortable={false}
+            bodyRef={bodyRef}
           />
         ) : loading ? (
           <SkeletonRows count={view.ids.length} />

@@ -39,15 +39,16 @@ node --env-file=.env scripts/probe.mjs  # read-only API inspection; prints no cr
 - All history pages on first open, first response, hidden undone events and a show-undone switch.
 - Automatic polling of the active request page, newest request head and open detail, scheduled 10 seconds after the previous load completes. Background updates keep the current content and scroll position visible.
 - Requests created after the initial notification baseline get a persistent “New” badge. A separate **New requests** table appears above the main table, showing five unread requests per page, newest first, across board views. Opening request details marks them seen and removes them from this table; the panel disappears when all are seen. Polling, navigation and reloads do not dismiss unread badges.
+- New arrival batches slide into the unread table and smoothly push existing rows down. Initial loads, ordinary polls, cache hydration and page changes do not replay the effect. Motion respects the system's reduced-motion preference and is canceled/cleaned up on navigation or unmount.
 - The unread table shares the main table's columns, colors, request links and mobile horizontal scrolling. It has independent pagination. Full unread records are cached only in memory (up to 100); after reload or cache eviction, only the five displayed records are fetched, through the client's concurrency limiter.
 - New-request batches play `public/sounds/sound-msg.mp3` once. The speaker button enables/previews or mutes sound and remembers the preference. [Browser autoplay policies](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Autoplay) can require a user click; rejected playback never interrupts polling or badges.
 - Audio uses one lazy, reusable media element, skips overlapping playback, and pauses/unloads its source on unmount. No audio objects are created per poll, no playback queue or retry timer accumulates, and pending play promises are handled during cleanup.
 - Timeouts, bounded concurrency, retry/backoff, `Retry-After`, cancellation, offline/retry notices and empty/loading/error states.
 - The same request table on desktop and mobile, with horizontal scrolling inside the table on narrow screens. Mobile filters use a sheet and request details use a full-screen view.
-- A compact “Back to top” button appears after scrolling down. It returns the page/table to the top, respects reduced motion and moves keyboard focus back to the heading.
+- A compact “Back to top” button appears after scrolling down. It returns the main content to the top, respects reduced motion and moves keyboard focus back to the heading.
 - Priority badges use red for High, amber for Medium and blue for Low, alongside text and signal icons.
 - Open requests due tomorrow show a yellow “Due tomorrow” badge and highlighted date in the table and detail drawer, based on each site's local calendar date.
-- Desktop results fit the available viewport through flex layout, with the footer outside the scroll region. Short windows and mobile use normal vertical document flow; horizontal overflow stays inside the table.
+- The main request table has a viewport-relative height limit (up to 640px), with vertical scrolling inside the table and sticky column headers. Its pagination remains outside that scroll region. The surrounding content scrolls only when the filters and panels need more room; narrow tables still scroll horizontally inside their borders. The board uses the full available width without a centered width cap. Hidden accessibility text is anchored so it cannot create phantom blank scroll space.
 
 ## Code map
 

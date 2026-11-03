@@ -1,4 +1,4 @@
-import type { MouseEvent } from "react";
+import type { MouseEvent, RefObject } from "react";
 import { Link, useNavigate } from "react-router";
 import {
   ArrowDown,
@@ -32,6 +32,7 @@ interface Props {
   tableId?: string;
   label?: string;
   sortable?: boolean;
+  bodyRef?: RefObject<HTMLTableSectionElement>;
 }
 function Due({ row, now }: { row: BoardRow; now: Date }) {
   const dueTomorrow = isDueTomorrow(row.request, row.site.timezone, now);
@@ -63,6 +64,7 @@ export function RequestTable({
   tableId = "requests",
   label = "Requests table",
   sortable = true,
+  bodyRef,
 }: Props) {
   const navigate = useNavigate();
   const changed = useBoardStore((state) => state.recentlyChanged);
@@ -180,10 +182,11 @@ export function RequestTable({
               )}
             </tr>
           </thead>
-          <tbody>
+          <tbody ref={bodyRef}>
             {rows.map((row) => (
               <tr
                 key={row.request.id}
+                data-request-row={row.request.id}
                 className={`${selectedId === row.request.id ? "is-selected" : ""} ${changed[row.request.id] > Date.now() - 2500 ? "is-updated" : ""}`}
                 onClick={(event) => openRow(event, row.request.id)}
               >

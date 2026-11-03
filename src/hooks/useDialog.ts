@@ -10,7 +10,11 @@ export function useDialog(onClose: () => void) {
       previousFocus.current = document.activeElement as HTMLElement | null;
     const previous = previousFocus.current;
     const originalOverflow = document.body.style.overflow;
+    const pageScroll =
+      document.querySelector<HTMLElement>("[data-page-scroll]");
+    const pageOverflow = pageScroll?.style.overflow ?? "";
     document.body.style.overflow = "hidden";
+    if (pageScroll) pageScroll.style.overflow = "hidden";
     ref.current?.querySelector<HTMLElement>("[data-initial-focus]")?.focus();
     function keydown(event: KeyboardEvent) {
       if (event.key === "Escape") {
@@ -49,6 +53,7 @@ export function useDialog(onClose: () => void) {
     document.addEventListener("keydown", keydown);
     return () => {
       document.body.style.overflow = originalOverflow;
+      if (pageScroll) pageScroll.style.overflow = pageOverflow;
       document.removeEventListener("keydown", keydown);
       // The board removes `inert` in the same commit; restore focus after that effect.
       queueMicrotask(() => {
